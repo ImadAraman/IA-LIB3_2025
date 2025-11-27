@@ -1,23 +1,56 @@
 package edu.najah.library.domain;
 
+import jakarta.persistence.*;
 import java.util.Objects;
 
 /**
  * Represents an administrator in the library management system.
  * Administrators can log in to manage books and users.
  * 
+ * <p>This entity is mapped to the "admins" table in the database.</p>
+ * 
  * @author Imad Araman, Hamza Abuobaid
  * @version 1.0
  */
+@Entity
+@Table(name = "admins", uniqueConstraints = {
+    @UniqueConstraint(columnNames = "username")
+})
 public class Admin {
     
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
+    
+    @Column(name = "username", nullable = false, unique = true, length = 100)
     private String username;
+    
+    @Column(name = "password", nullable = false, length = 255)
     private String password;
     
     /**
-     * Default constructor.
+     * Default constructor required by JPA.
      */
     public Admin() {
+    }
+    
+    /**
+     * Gets the admin's database ID.
+     * 
+     * @return the admin ID
+     */
+    public Long getId() {
+        return id;
+    }
+    
+    /**
+     * Sets the admin's database ID.
+     * 
+     * @param id the ID to set
+     */
+    public void setId(Long id) {
+        this.id = id;
     }
     
     /**

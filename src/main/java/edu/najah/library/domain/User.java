@@ -1,24 +1,59 @@
 package edu.najah.library.domain;
 
+import jakarta.persistence.*;
 import java.util.Objects;
 
 /**
  * Represents a library user/patron.
  * Each user has a unique ID, name, and email.
  * 
+ * <p>This entity is mapped to the "users" table in the database.</p>
+ * 
  * @author Imad Araman, Hamza Abuobaid
  * @version 1.0
  */
+@Entity
+@Table(name = "users", uniqueConstraints = {
+    @UniqueConstraint(columnNames = "user_id")
+})
 public class User {
     
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
+    
+    @Column(name = "user_id", nullable = false, unique = true, length = 50)
     private String userId;
+    
+    @Column(name = "name", nullable = false, length = 255)
     private String name;
+    
+    @Column(name = "email", nullable = false, length = 255)
     private String email;
     
     /**
-     * Default constructor.
+     * Default constructor required by JPA.
      */
     public User() {
+    }
+    
+    /**
+     * Gets the user's database ID.
+     * 
+     * @return the user ID
+     */
+    public Long getId() {
+        return id;
+    }
+    
+    /**
+     * Sets the user's database ID.
+     * 
+     * @param id the ID to set
+     */
+    public void setId(Long id) {
+        this.id = id;
     }
     
     /**

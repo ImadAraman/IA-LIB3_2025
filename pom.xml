@@ -19,6 +19,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.0</junit.version>
         <mockito.version>5.5.0</mockito.version>
+        <hibernate.version>6.4.1.Final</hibernate.version>
+        <postgresql.version>42.7.1</postgresql.version>
+        <hikaricp.version>5.1.0</hikaricp.version>
     </properties>
 
     <dependencies>
@@ -48,6 +51,34 @@
             <artifactId>mockito-junit-jupiter</artifactId>
             <version>${mockito.version}</version>
             <scope>test</scope>
+        </dependency>
+        
+        <!-- PostgreSQL JDBC Driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+        </dependency>
+        
+        <!-- Hibernate Core (JPA Implementation) -->
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${hibernate.version}</version>
+        </dependency>
+        
+        <!-- HikariCP Connection Pooling -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>${hikaricp.version}</version>
+        </dependency>
+        
+        <!-- Jakarta Persistence API -->
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+            <version>3.1.0</version>
         </dependency>
     </dependencies>
 
@@ -93,13 +124,16 @@
                 </executions>
             </plugin>
             
-            <!-- Exec plugin-->
-            
+            <!-- Exec plugin for running database scripts -->
             <plugin>
-    <groupId>org.codehaus.mojo</groupId>
-    <artifactId>exec-maven-plugin</artifactId>
-    <version>3.1.0</version>
-</plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>edu.najah.library.persistence.DatabaseDemo</mainClass>
+                    <includePluginDependencies>true</includePluginDependencies>
+                </configuration>
+            </plugin>
 
             <!-- Maven Javadoc Plugin -->
             <plugin>
