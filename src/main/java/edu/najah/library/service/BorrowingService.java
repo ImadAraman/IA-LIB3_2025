@@ -44,12 +44,15 @@ public class BorrowingService {
     
     /**
      * Borrows a book for a user on a specific date.
-     * Book must be available and user must not have unpaid fines.
+     * Book must be available and user must not have unpaid fines or overdue books.
+     * 
+     * <p>US4.1: Users cannot borrow if they have overdue books or unpaid fines.</p>
      * 
      * @param user the user borrowing the book
      * @param book the book to borrow
      * @param borrowDate the date of borrowing
      * @return the created Loan, or null if borrow failed
+     * @throws IllegalStateException if user has overdue books or unpaid fines
      */
     public Loan borrowBook(User user, Book book, LocalDate borrowDate) {
         if (user == null || book == null || borrowDate == null) {
@@ -61,8 +64,15 @@ public class BorrowingService {
             return null;
         }
         
-        // Check if user has unpaid fines
-        if (!canBorrow(user)) {
+        // Check if user can borrow (no unpaid fines and no overdue books)
+        if (!canBorrow(user, borrowDate)) {
+            // Get the specific reason
+            if (hasUnpaidFines(user)) {
+                throw new IllegalStateException("Cannot borrow books: user has unpaid fines.");
+            }
+            if (hasOverdueBooks(user, borrowDate)) {
+                throw new IllegalStateException("Cannot borrow books: user has overdue books.");
+            }
             return null;
         }
         
@@ -177,17 +187,58 @@ public class BorrowingService {
     }
     
     /**
-     * Checks if a user can borrow (has no unpaid fines).
+     * Checks if a user can borrow (has no unpaid fines and no overdue books).
+     * 
+     * <p>US4.1: Users cannot borrow if they have overdue books or unpaid fines.</p>
      * 
      * @param user the user
-     * @return true if user can borrow, false if has unpaid fines
+     * @return true if user can borrow, false if has unpaid fines or overdue books
      */
     public boolean canBorrow(User user) {
-        if (user == null) {
+        return canBorrow(user, LocalDate.now());
+    }
+    
+    /**
+     * Checks if a user can borrow as of a specific date.
+     * 
+     * <p>US4.1: Users cannot borrow if they have overdue books or unpaid fines.</p>
+     * 
+     * @param user the user
+     * @param currentDate the date to check against
+     * @return true if user can borrow, false if has unpaid fines or overdue books
+     */
+    public boolean canBorrow(User user, LocalDate currentDate) {
+        if (user == null || currentDate == null) {
             return false;
         }
         
-        return !hasUnpaidFines(user);
+        // Check for unpaid fines
+        if (hasUnpaidFines(user)) {
+            return false;
+        }
+        
+        // Check for overdue books
+        if (hasOverdueBooks(user, currentDate)) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Checks if a user has any overdue books as of a specific date.
+     * 
+     * @param user the user
+     * @param currentDate the date to check against
+     * @return true if user has overdue books, false otherwise
+     */
+    public boolean hasOverdueBooks(User user, LocalDate currentDate) {
+        if (user == null || currentDate == null) {
+            return false;
+        }
+        
+        return getActiveLoans(user).stream()
+                .anyMatch(loan -> loan.isOverdue(currentDate));
     }
     
     /**

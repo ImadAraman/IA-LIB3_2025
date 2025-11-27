@@ -63,8 +63,8 @@ public class OverdueDetectionService {
     }
     
     /**
-     * Calculates the fine amount for an overdue loan.
-     * Fine is $0.50 per day overdue.
+     * Calculates the fine amount for an overdue loan using the default strategy.
+     * This method maintains backward compatibility with existing code.
      * 
      * @param loan the loan
      * @param currentDate the date to calculate fine as of
@@ -82,6 +82,43 @@ public class OverdueDetectionService {
         }
         
         return Fine.calculateFineAmount(daysOverdue);
+    }
+    
+    /**
+     * Calculates the fine amount for an overdue loan using a specific fine strategy.
+     * Uses the Strategy Design Pattern to allow different fine rates for different item types.
+     * 
+     * @param loan the loan
+     * @param currentDate the date to calculate fine as of
+     * @param strategy the fine calculation strategy to use
+     * @return the fine amount in NIS, or 0 if loan is not overdue
+     */
+    public int calculateOverdueFine(Loan loan, LocalDate currentDate, FineStrategy strategy) {
+        if (loan == null || currentDate == null || strategy == null) {
+            return 0;
+        }
+        
+        long daysOverdue = loan.getDaysOverdue(currentDate);
+        
+        if (daysOverdue <= 0) {
+            return 0;
+        }
+        
+        return strategy.calculateFine((int) daysOverdue);
+    }
+    
+    /**
+     * Calculates the fine amount for an overdue loan based on item type.
+     * Automatically selects the appropriate strategy using FineStrategyFactory.
+     * 
+     * @param loan the loan
+     * @param currentDate the date to calculate fine as of
+     * @param itemType the type of library item (BOOK, CD, JOURNAL)
+     * @return the fine amount in NIS, or 0 if loan is not overdue
+     */
+    public int calculateOverdueFine(Loan loan, LocalDate currentDate, FineStrategyFactory.ItemType itemType) {
+        FineStrategy strategy = FineStrategyFactory.getStrategy(itemType);
+        return calculateOverdueFine(loan, currentDate, strategy);
     }
     
     /**
