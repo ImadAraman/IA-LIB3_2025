@@ -1,19 +1,42 @@
 package edu.najah.library.domain;
 
+import jakarta.persistence.*;
 import java.util.Objects;
 
 /**
  * Represents a CD in the library management system.
  * Each CD has a title, artist, and availability status.
  * 
+ * <p>US5.1: CDs can be borrowed for 7 days (different from books which are 28 days).</p>
+ * 
+ * <p>This entity is mapped to the "cds" table in the database.</p>
+ * 
  * @author Imad Araman
  * @version 1.0
  */
-public class CD {
+@Entity
+@Table(name = "cds", uniqueConstraints = {
+    @UniqueConstraint(columnNames = "catalog_number")
+})
+public class CD implements LibraryItem {
     
+    private static final int CD_LOAN_PERIOD_DAYS = 7; // US5.1: CDs borrowed for 7 days
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
+    
+    @Column(name = "title", nullable = false, length = 255)
     private String title;
+    
+    @Column(name = "artist", nullable = false, length = 255)
     private String artist;
+    
+    @Column(name = "catalog_number", nullable = false, unique = true, length = 50)
     private String catalogNumber;
+    
+    @Column(name = "is_available", nullable = false)
     private boolean isAvailable;
     
     /**
@@ -121,8 +144,41 @@ public class CD {
      * 
      * @param available the availability status to set
      */
+    @Override
     public void setAvailable(boolean available) {
         isAvailable = available;
+    }
+    
+    /**
+     * Gets the unique identifier (catalog number) for this CD.
+     * 
+     * @return the catalog number
+     */
+    @Override
+    public String getUniqueIdentifier() {
+        return catalogNumber;
+    }
+    
+    /**
+     * Gets the loan period for CDs (7 days).
+     * 
+     * <p>US5.1: CDs are borrowed for 7 days.</p>
+     * 
+     * @return 7 days
+     */
+    @Override
+    public int getLoanPeriodDays() {
+        return CD_LOAN_PERIOD_DAYS;
+    }
+    
+    /**
+     * Gets the item type (CD).
+     * 
+     * @return ItemType.CD
+     */
+    @Override
+    public ItemType getItemType() {
+        return ItemType.CD;
     }
     
     /**

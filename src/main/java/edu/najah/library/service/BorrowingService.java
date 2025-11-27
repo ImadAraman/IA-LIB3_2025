@@ -1,6 +1,8 @@
 package edu.najah.library.service;
 
 import edu.najah.library.domain.Book;
+import edu.najah.library.domain.CD;
+import edu.najah.library.domain.LibraryItem;
 import edu.najah.library.domain.User;
 import edu.najah.library.domain.Loan;
 import edu.najah.library.domain.Fine;
@@ -89,21 +91,122 @@ public class BorrowingService {
     }
     
     /**
-     * Returns a borrowed book.
+     * Borrows a CD for a user.
+     * CD must be available and user must not have unpaid fines or overdue items.
+     * 
+     * <p>US5.1: CDs are borrowed for 7 days (different from books which are 28 days).</p>
+     * 
+     * @param user the user borrowing the CD
+     * @param cd the CD to borrow
+     * @return the created Loan, or null if borrow failed
+     * @throws IllegalStateException if user has overdue items or unpaid fines
+     */
+    public Loan borrowCD(User user, CD cd) {
+        return borrowCD(user, cd, LocalDate.now());
+    }
+    
+    /**
+     * Borrows a CD for a user on a specific date.
+     * CD must be available and user must not have unpaid fines or overdue items.
+     * 
+     * <p>US5.1: CDs are borrowed for 7 days (different from books which are 28 days).</p>
+     * 
+     * @param user the user borrowing the CD
+     * @param cd the CD to borrow
+     * @param borrowDate the date of borrowing
+     * @return the created Loan, or null if borrow failed
+     * @throws IllegalStateException if user has overdue items or unpaid fines
+     */
+    public Loan borrowCD(User user, CD cd, LocalDate borrowDate) {
+        if (user == null || cd == null || borrowDate == null) {
+            return null;
+        }
+        
+        // Check if CD is available
+        if (!cd.isAvailable()) {
+            return null;
+        }
+        
+        // Check if user can borrow (no unpaid fines and no overdue items)
+        if (!canBorrow(user, borrowDate)) {
+            // Get the specific reason
+            if (hasUnpaidFines(user)) {
+                throw new IllegalStateException("Cannot borrow CDs: user has unpaid fines.");
+            }
+            if (hasOverdueBooks(user, borrowDate)) {
+                throw new IllegalStateException("Cannot borrow CDs: user has overdue items.");
+            }
+            return null;
+        }
+        
+        // Create loan (CDs use 7-day loan period automatically via LibraryItem interface)
+        Loan loan = new Loan(cd, user, borrowDate);
+        
+        // Mark CD as unavailable
+        cd.setAvailable(false);
+        
+        // Add to loans list
+        loans.add(loan);
+        
+        return loan;
+    }
+    
+    /**
+     * Borrows any library item (polymorphic method).
+     * 
+     * <p>US5.1: Automatically uses correct loan period based on item type.</p>
+     * 
+     * @param user the user borrowing the item
+     * @param item the library item to borrow
+     * @param borrowDate the date of borrowing
+     * @return the created Loan, or null if borrow failed
+     * @throws IllegalStateException if user has overdue items or unpaid fines
+     */
+    public Loan borrowItem(User user, LibraryItem item, LocalDate borrowDate) {
+        if (item == null) {
+            return null;
+        }
+        
+        if (item instanceof Book) {
+            return borrowBook(user, (Book) item, borrowDate);
+        } else if (item instanceof CD) {
+            return borrowCD(user, (CD) item, borrowDate);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Returns a borrowed item.
      * 
      * @param loan the loan to process return for
      * @param returnDate the return date
      */
-    public void returnBook(Loan loan, LocalDate returnDate) {
+    public void returnItem(Loan loan, LocalDate returnDate) {
         if (loan == null || returnDate == null) {
             return;
         }
         
         loan.setReturnDate(returnDate);
         
-        if (loan.getBook() != null) {
+        // Mark item as available (polymorphic handling)
+        LibraryItem item = loan.getItem();
+        if (item != null) {
+            item.setAvailable(true);
+        } else if (loan.getBook() != null) {
+            // Backward compatibility
             loan.getBook().setAvailable(true);
         }
+    }
+    
+    /**
+     * Returns a borrowed book.
+     * 
+     * @param loan the loan to process return for
+     * @param returnDate the return date
+     */
+    public void returnBook(Loan loan, LocalDate returnDate) {
+        returnItem(loan, returnDate);
     }
     
     /**
