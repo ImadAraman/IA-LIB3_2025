@@ -86,7 +86,8 @@ public class OverdueDetectionServiceTest {
         
         double fine = overdueService.calculateOverdueFine(loan, currentDate);
         
-        assertEquals(2.0, fine); // 4 days * $0.50 = $2.00
+        // US5.2: Now uses strategy-based calculation (10 NIS per day for books)
+        assertEquals(40.0, fine, 0.01); // 4 days * 10 NIS = 40 NIS
     }
     
     @Test

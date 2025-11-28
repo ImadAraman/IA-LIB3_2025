@@ -1,0 +1,20 @@
+# Neon PostgreSQL Database Configuration
+# Copy this file to database.properties and fill in your actual credentials
+# DO NOT commit database.properties to version control
+
+# Database Connection URL from Neon
+# Format: jdbc:postgresql://hostname:port/database?sslmode=require
+db.url=jdbc:postgresql://your-neon-host:5432/your-database?sslmode=require
+
+# Database Username
+db.user=your-username
+
+# Database Password
+db.password=your-password
+
+# Alternative: Use Environment Variables
+# Set these in your system environment or IDE run configuration:
+# NEON_DB_URL=jdbc:postgresql://your-neon-host:5432/your-database?sslmode=require
+# NEON_DB_USER=your-username
+# NEON_DB_PASSWORD=your-password
+

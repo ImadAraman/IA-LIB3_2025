@@ -57,9 +57,92 @@ public class BorrowingServiceTest {
         Fine fine = new Fine(user, 5.0, borrowDate);
         borrowingService.addFine(fine);
         
-        Loan loan = borrowingService.borrowBook(user, book, borrowDate);
+        // US4.1: Should throw exception with proper error message
+        IllegalStateException exception = assertThrows(IllegalStateException.class, 
+            () -> borrowingService.borrowBook(user, book, borrowDate));
         
-        assertNull(loan);
+        assertTrue(exception.getMessage().contains("unpaid fines"));
+    }
+    
+    @Test
+    public void testBorrowBookWithOverdueBooks() {
+        // Create an overdue loan
+        Book overdueBook = new Book("Overdue Book", "Author", "ISBN456");
+        Loan overdueLoan = borrowingService.borrowBook(user, overdueBook, borrowDate);
+        LocalDate currentDate = borrowDate.plusDays(30); // Loan is now overdue
+        
+        // US4.1: Should throw exception when trying to borrow with overdue books
+        Book newBook = new Book("New Book", "Author", "ISBN789");
+        IllegalStateException exception = assertThrows(IllegalStateException.class, 
+            () -> borrowingService.borrowBook(user, newBook, currentDate));
+        
+        assertTrue(exception.getMessage().contains("overdue books"));
+    }
+    
+    @Test
+    public void testBorrowBookWithBothOverdueBooksAndFines() {
+        // Create an overdue loan
+        Book overdueBook = new Book("Overdue Book", "Author", "ISBN456");
+        borrowingService.borrowBook(user, overdueBook, borrowDate);
+        LocalDate currentDate = borrowDate.plusDays(30);
+        
+        // Create unpaid fine
+        Fine fine = new Fine(user, 5.0, borrowDate);
+        borrowingService.addFine(fine);
+        
+        // Should throw exception (unpaid fines checked first)
+        Book newBook = new Book("New Book", "Author", "ISBN789");
+        IllegalStateException exception = assertThrows(IllegalStateException.class, 
+            () -> borrowingService.borrowBook(user, newBook, currentDate));
+        
+        assertTrue(exception.getMessage().contains("unpaid fines"));
+    }
+    
+    @Test
+    public void testCanBorrowWithOverdueBooks() {
+        // Create an overdue loan
+        Book overdueBook = new Book("Overdue Book", "Author", "ISBN456");
+        borrowingService.borrowBook(user, overdueBook, borrowDate);
+        LocalDate currentDate = borrowDate.plusDays(30);
+        
+        // US4.1: User should not be able to borrow if they have overdue books
+        assertFalse(borrowingService.canBorrow(user, currentDate));
+    }
+    
+    @Test
+    public void testCanBorrowWithReturnedOverdueBook() {
+        // Create a loan that was overdue but is now returned
+        Book book = new Book("Book", "Author", "ISBN456");
+        Loan loan = borrowingService.borrowBook(user, book, borrowDate);
+        LocalDate overdueDate = borrowDate.plusDays(30);
+        borrowingService.returnBook(loan, overdueDate.plusDays(5));
+        
+        // User should be able to borrow now that book is returned
+        assertTrue(borrowingService.canBorrow(user, overdueDate.plusDays(5)));
+    }
+    
+    @Test
+    public void testHasOverdueBooks() {
+        // No overdue books initially
+        assertFalse(borrowingService.hasOverdueBooks(user, borrowDate.plusDays(20)));
+        
+        // Create an overdue loan
+        Book overdueBook = new Book("Overdue Book", "Author", "ISBN456");
+        borrowingService.borrowBook(user, overdueBook, borrowDate);
+        LocalDate currentDate = borrowDate.plusDays(30);
+        
+        assertTrue(borrowingService.hasOverdueBooks(user, currentDate));
+    }
+    
+    @Test
+    public void testHasOverdueBooksReturnsFalseForReturnedLoan() {
+        // Create a loan and return it before it becomes overdue
+        Book book = new Book("Book", "Author", "ISBN456");
+        Loan loan = borrowingService.borrowBook(user, book, borrowDate);
+        borrowingService.returnBook(loan, borrowDate.plusDays(20));
+        
+        LocalDate currentDate = borrowDate.plusDays(30);
+        assertFalse(borrowingService.hasOverdueBooks(user, currentDate));
     }
     
     @Test
@@ -97,7 +180,20 @@ public class BorrowingServiceTest {
         Fine fine = new Fine(user, 5.0, borrowDate);
         borrowingService.addFine(fine);
         
+        // US4.1: User cannot borrow with unpaid fines
         assertFalse(borrowingService.canBorrow(user));
+    }
+    
+    @Test
+    public void testCannotBorrowWithOverdueBooks() {
+        // Create an overdue loan
+        Book overdueBook = new Book("Overdue Book", "Author", "ISBN456");
+        borrowingService.borrowBook(user, overdueBook, borrowDate);
+        // Advance date to make loan overdue
+        LocalDate currentDate = borrowDate.plusDays(30);
+        
+        // US4.1: User cannot borrow with overdue books
+        assertFalse(borrowingService.canBorrow(user, currentDate));
     }
     
     @Test
