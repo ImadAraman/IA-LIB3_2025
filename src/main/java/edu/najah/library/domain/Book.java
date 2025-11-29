@@ -16,7 +16,7 @@ import java.util.Objects;
 @Table(name = "books", uniqueConstraints = {
     @UniqueConstraint(columnNames = "isbn")
 })
-public class Book {
+public class Book implements LibraryItem {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -160,6 +160,37 @@ public class Book {
      */
     public void setAvailable(boolean available) {
         this.isAvailable = available;
+    }
+    
+    /**
+     * Gets the unique identifier for this book (LibraryItem interface).
+     * 
+     * @return the ISBN
+     */
+    @Override
+    public String getUniqueIdentifier() {
+        return isbn;
+    }
+    
+    /**
+     * Gets the loan period in days for books (LibraryItem interface).
+     * Books have a 28-day loan period.
+     * 
+     * @return 28 days
+     */
+    @Override
+    public int getLoanPeriodDays() {
+        return 28;
+    }
+    
+    /**
+     * Gets the item type (LibraryItem interface).
+     * 
+     * @return ItemType.BOOK
+     */
+    @Override
+    public LibraryItem.ItemType getItemType() {
+        return LibraryItem.ItemType.BOOK;
     }
     
     /**
